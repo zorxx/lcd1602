@@ -1,0 +1,9 @@
+#ifndef LCD1602_PROTOCOL_H
+#define LCD1602_PROTOCOL_H
+
+#define LCD1602_I2C_TRANSFER_TIMEOUT 500 /* ms */
+
+#define LCD1602_CMD_CLEAR   0x00
+#define LCD1602_CMD_HOME    0x01
+
+#endif /* LCD1602_PROTOCOL_H */
