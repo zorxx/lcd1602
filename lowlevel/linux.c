@@ -2,6 +2,8 @@
 #include <malloc.h>
 #include <string.h>
 #include <fcntl.h>
+#include <time.h>
+#include <pthread.h>
 #include <sys/ioctl.h>
 #include <linux/i2c.h>
 #include <linux/i2c-dev.h>
@@ -13,6 +15,7 @@ typedef struct esp_lcd1602_s
 {
     char *device;
     int handle;
+    pthread_mutex_t lock;
 } linux_lcd1602_t;
 
 int lcd1602_ll_init(lcd1602_t *ctx, lcd1602_lowlevel_config *config)
@@ -51,6 +54,7 @@ int lcd1602_ll_init(lcd1602_t *ctx, lcd1602_lowlevel_config *config)
    if(0 == result)
    {
       ctx->lowlevel = l;
+      pthread_mutex_init(&l->lock, NULL);
    }
    else
    {
@@ -58,12 +62,14 @@ int lcd1602_ll_init(lcd1602_t *ctx, lcd1602_lowlevel_config *config)
          close(l->handle);
       free(l);
    }
+
    return result;
 }
 
 int lcd1602_ll_deinit(lcd1602_t *ctx)
 {
    linux_lcd1602_t *l = (linux_lcd1602_t *) ctx->lowlevel; 
+   pthread_mutex_destroy(&l->lock);
    if(NULL != l->device)
       free(l->device);
    free(l);
@@ -81,4 +87,31 @@ int lcd1602_ll_write_byte(lcd1602_t *ctx, uint8_t byte)
    args.size = sizeof(byte); 
    args.data = &data; 
    return ioctl(l->handle, I2C_SMBUS, &args);
+}
+
+int lcd1602_ll_delay(lcd1602_t *ctx, uint32_t microseconds)
+{
+   usleep(microseconds);
+   return 0;
+}
+
+int lcd1602_ll_mutex_lock(lcd1602_t *ctx)
+{
+   linux_lcd1602_t *l = (linux_lcd1602_t *) ctx->lowlevel;
+   pthread_mutex_lock(&l->lock);
+   return 0;
+}
+
+int lcd1602_ll_mutex_unlock(lcd1602_t *ctx)
+{
+   linux_lcd1602_t *l = (linux_lcd1602_t *) ctx->lowlevel;
+   pthread_mutex_unlock(&l->lock);
+   return 0;
+}
+
+uint64_t lcd1602_ll_microsecond_tick(lcd1602_t *ctx)
+{
+   struct timespec ts;
+   clock_gettime(CLOCK_MONOTONIC, &ts);
+   return ((uint64_t)ts.tv_nsec) / 1000 + (((uint64_t)ts.tv_sec) * 1000000UL);
 }

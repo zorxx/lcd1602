@@ -52,3 +52,19 @@ int lcd1602_ll_write_byte(const lcd1602_t *c, const uint8_t byte)
 
    return ret;
 }
+
+int lcd1602_ll_delay(lcd1602_t *ctx, uint32_t microseconds)
+{
+   ets_delay_us(microseconds);
+   return 0;
+}
+
+int lcd1602_ll_lock(lcd1602_t *ctx)
+{
+   return 0;
+}
+
+int lcd1602_ll_unlock(lcd1602_t *ctx)
+{
+   return 0;
+}
