@@ -45,9 +45,9 @@ int lcd1602_ll_init(lcd1602_t *ctx, lcd1602_lowlevel_config *config)
       {
          LCDERR("[%s] Failed to open device '%s'\n", __func__, l->device);
       }
-      else if(ioctl(l->handle, I2C_SLAVE, ctx->i2c_addr) < 0)
+      else if(ioctl(l->handle, I2C_SLAVE, ctx->i2cAddress) < 0)
       {
-         LCDERR("[%s] Failed to set I2C slave address to 0x%02x\n", __func__, ctx->i2c_addr);
+         LCDERR("[%s] Failed to set I2C slave address to 0x%02x\n", __func__, ctx->i2cAddress);
       }
       else
          result = 0;
@@ -72,10 +72,17 @@ int lcd1602_ll_init(lcd1602_t *ctx, lcd1602_lowlevel_config *config)
 int lcd1602_ll_deinit(lcd1602_t *ctx)
 {
    linux_lcd1602_t *l = (linux_lcd1602_t *) ctx->lowlevel; 
+
+   if(NULL == l)
+      return 0;
+
+   if(l->handle >= 0)
+      close(l->handle);
    pthread_mutex_destroy(&l->lock);
    if(NULL != l->device)
       free(l->device);
    free(l);
+
    return 0;
 }
 
@@ -128,6 +135,10 @@ int lcd1602_ll_mutex_unlock(lcd1602_t *ctx)
 uint64_t lcd1602_ll_microsecond_tick(lcd1602_t *ctx)
 {
    struct timespec ts;
-   clock_gettime(CLOCK_MONOTONIC, &ts);
+   if(clock_gettime(CLOCK_MONOTONIC, &ts) != 0)
+   {
+      LCDERR("[%s] Failed to query time (errno %d)\n", __func__, errno);
+      memset(&ts, 0, sizeof(ts)); /* no reasonable recourse */
+   }
    return ((uint64_t)ts.tv_nsec) / 1000 + (((uint64_t)ts.tv_sec) * 1000000UL);
 }

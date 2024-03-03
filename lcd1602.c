@@ -14,7 +14,7 @@ static int lcd1602_write_byte(lcd1602_t *c, uint8_t value, bool isData, uint32_t
  * Exported Functions 
  */
 
-lcd1602_context lcd1602_init(uint16_t i2c_addr, lcd1602_lowlevel_config *config)
+lcd1602_context lcd1602_init(uint8_t i2cAddress, bool backlightOn, lcd1602_lowlevel_config *config)
 {
    lcd1602_t *c;
 
@@ -22,8 +22,8 @@ lcd1602_context lcd1602_init(uint16_t i2c_addr, lcd1602_lowlevel_config *config)
    if(NULL == c)
       return NULL;
    memset(c, 0, sizeof(*c));
-   c->i2c_addr = i2c_addr;
-   c->backlight_on = true;
+   c->i2cAddress = i2cAddress;
+   c->backlightOn = backlightOn;
 
    if(lcd1602_ll_init(c, config) != 0
    || lcd1602_reset(c) != 0)
@@ -45,25 +45,19 @@ void lcd1602_deinit(lcd1602_context context)
 int lcd1602_reset(lcd1602_context context)
 {
    lcd1602_t *c = (lcd1602_t *) context;
-   uint8_t data[4];
 
-   lcd1602_ll_delay(c, 15000); /* wait time >= 15ms after VCC > 4.5V */ 
+   lcd1602_ll_delay(c, 15000); /* wait time >= 15 ms after VCC > 4.5V */ 
 
-   if(lcd1602_write_nibble(c, 0x03, false) != 0
-   || lcd1602_ll_delay(c, 4100) != 0
+   if(lcd1602_write_nibble(c, 0x03, false) != 0  
+   || lcd1602_ll_delay(c, 4100) != 0                /* wait 4.1 ms */
    || lcd1602_write_nibble(c, 0x03, false) != 0
-   || lcd1602_ll_delay(c, 100) != 0
+   || lcd1602_ll_delay(c, 100) != 0                 /* wait 100 us */
    || lcd1602_write_nibble(c, 0x02, false) != 0
    || lcd1602_ll_delay(c, LCD1602_DELAY_ENABLE_PULSE_SETTLE) != 0
    || lcd1602_write_byte(c, LCD1602_CMD_FUNCTION_SET | FLAG_FUNCTION_SET_LINES_2, false, 0) != 0
    || lcd1602_set_display(c, true, false, false) != 0
    || lcd1602_clear(c) != 0
    || lcd1602_set_mode(c, true, false) != 0)
-   {
-      return -1;
-   }
-
-   if(lcd1602_set_display(c, true, false, false) != 0)
    {
       return -1;
    }
@@ -107,12 +101,16 @@ int lcd1602_string(lcd1602_context context, char *s)
 {
    uint32_t count;
    int result;
-
+   
    for(count = 0; count < LCD1602_MAX_CHAR_WRITE_COUNT && s[count] != '\0'; ++count)
    { 
       result = lcd1602_write_byte((lcd1602_t *) context, s[count], true, 0);
       if(0 != result)
+      {
+         LCDERR("[%s] Failed to write character index %u (result %d)\n",
+            __func__, count, result);
          return result;
+      }
    }
    return 0;
 }
@@ -129,7 +127,7 @@ int lcd1602_scroll(lcd1602_context context, eLCD1602ScrollTarget target,
 int lcd1602_set_backlight(lcd1602_context context, bool enable)
 {
    lcd1602_t *c = (lcd1602_t *) context;
-   c->backlight_on = enable;
+   c->backlightOn = enable;
    return 0; 
 }
 
@@ -149,23 +147,27 @@ int lcd1602_set_cursor(lcd1602_context context, uint16_t row, uint16_t column)
  * Private Helper Functions
  */
 
+/* The lower 4 bits of "value" are transferred by this function. The caller is responsible for ensuring
+   a delay of LCD1602_DELAY_ENABLE_PULSE_SETTLE occurs before the next i2c transfer. */
 static int lcd1602_write_nibble(lcd1602_t *c, uint8_t value, bool isData)
 {
-   uint8_t flags = ((c->backlight_on) ? LCD1602_FLAG_BACKLIGHT_ON : 0)
+   uint8_t flags = ((c->backlightOn) ? LCD1602_FLAG_BACKLIGHT_ON : 0)
                  | ((isData) ? LCD1602_FLAG_RS_DATA : 0); /* if not isData, then control */
+
+   /* I2C byte is clocked-in on the falling edge of LCD1602_FLAG_ENABLE */
    if(lcd1602_ll_write_byte(c, ((value << 4) & 0xf0) | flags) != 0
    || lcd1602_ll_delay(c, 1) != 0  /* data setup time */
    || lcd1602_ll_write_byte(c, ((value << 4) & 0xf0) | flags | LCD1602_FLAG_ENABLE) != 0
-   || lcd1602_ll_delay(c, 1) != 0 /* pulse width */
+   || lcd1602_ll_delay(c, 1) != 0  /* pulse width */
    || lcd1602_ll_write_byte(c, ((value << 4) & 0xf0) | flags & ~LCD1602_FLAG_ENABLE) != 0)
    {
+      LCDERR("[%s] Failed to transfer 0x%02x\n", __func__, value);
       return -1;
    }
 
    return 0;
 }
 
-/* Byte is clocked-in on the falling edge of LCD1602_FLAG_ENABLE */
 static int lcd1602_write_byte(lcd1602_t *c, uint8_t value, bool isData, uint32_t finalDelay)
 {
    uint64_t currentTime = lcd1602_ll_microsecond_tick(c); 

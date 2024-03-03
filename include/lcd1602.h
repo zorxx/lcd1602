@@ -2,7 +2,7 @@
 #define LCD_1602_H
 
 #include <stdint.h>
-#include <stdbool.h>
+#include <stdbool.h>  /* Requires C99 */
 
 typedef void *lcd1602_context;
 
@@ -16,13 +16,22 @@ typedef void *lcd1602_context;
 #if defined(__linux__)
 typedef struct
 {
-   const char *device;
+   /* Note that it may be necessary to access i2c device files as root */
+   const char *device;   /* e.g. "/dev/i2c-0" */
 } lcd1602_lowlevel_config;
+
+#elif defined(ESP_IDF_VERSION) && ESP_IDF_VERSION >= ESP_IDF_VERSION_VAL(4, 0, 0) 
+typedef struct esp_lcd1602_s
+{
+    i2c_port_t port;
+    ssize_t timeout;
+} lcd1602_lowlevel_config;
+
 #else
-   #error "OS type not detected"
+   #error "Supported OS type not detected"
 #endif
 
-lcd1602_context lcd1602_init(uint16_t i2c_addr, lcd1602_lowlevel_config *config);
+lcd1602_context lcd1602_init(uint8_t i2cAddress, bool backlightOn, lcd1602_lowlevel_config *config);
 void lcd1602_deinit(lcd1602_context context);
 
 /* ----------------------------------------------------------------
@@ -31,8 +40,8 @@ void lcd1602_deinit(lcd1602_context context);
 
 typedef enum
 {
-    LCD1602_SCROLL_DISPLAY,
-    LCD1602_SCROLL_CURSOR
+   LCD1602_SCROLL_DISPLAY,
+   LCD1602_SCROLL_CURSOR
 } eLCD1602ScrollTarget;
 
 typedef enum
@@ -43,7 +52,8 @@ typedef enum
 
 int lcd1602_reset(lcd1602_context context);
 int lcd1602_set_backlight(lcd1602_context context, bool enable);
-int lcd1602_set_display(lcd1602_context context, bool displayEnabled, bool cursorEnabled, bool blinkEnabled);
+int lcd1602_set_display(lcd1602_context context, bool displayEnabled,
+   bool cursorEnabled, bool blinkEnabled);
 int lcd1602_set_mode(lcd1602_context context, bool leftToRight, bool autoScroll);
 
 int lcd1602_clear(lcd1602_context context);

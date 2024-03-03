@@ -1,16 +1,12 @@
 #ifndef LCD1602_PROTOCOL_H
 #define LCD1602_PROTOCOL_H
 
-#define LCD1602_I2C_TRANSFER_TIMEOUT 500 /* ms */
+#define LCD1602_I2C_TRANSFER_TIMEOUT       50 /* (milliseconds) give up on i2c transaction after this timeout */
+#define LCD1602_MAX_DELAY                  10000  /* (microseconds) never need to wait longer than 10ms between i2c transactions */
+#define LCD1602_DELAY_ENABLE_PULSE_WIDTH   1  /* (microseconds) enable pulse must be at least 450ns wide */
+#define LCD1602_DELAY_ENABLE_PULSE_SETTLE  38 /* (microseconds) command requires > 37us to settle */
 
-#define LCD1602_MAX_CHAR_WRITE_COUNT 1024
-
-#define LCD1602_DELAY_POWER_ON 40000  /* wait at least 40ms after VCC rises to 2.7V */
-#define LCD1602_MAX_DELAY      10000  /* never need to wait longer than 10ms between i2c transactions */
-
-#define LCD1602_DELAY_ENABLE_PULSE_WIDTH   1  /* enable pulse must be at least 450ns wide */
-#define LCD1602_DELAY_ENABLE_PULSE_SETTLE  38 /* command requires > 37us to settle */
-
+#define LCD1602_MAX_CHAR_WRITE_COUNT 256 
 #define LCD1602_MAX_ROWS      4
 #define LCD1602_MAX_COLUMNS   20
 
@@ -46,11 +42,11 @@
 #define LCD1602_CMD_SET_DDRAM_ADDR  (1 << 7)
 #define LCD1602_ROW_OFFSET "\x00\x40\0x14\0x54"
 
-// Control flags
-#define LCD1602_FLAG_BACKLIGHT_ON    0b00001000      // backlight enabled (disabled if clear)
-#define LCD1602_FLAG_ENABLE          0b00000100      // Data clock enable (falling edge clocks data)
-#define LCD1602_FLAG_READ            0b00000010      // read (write if clear)
-#define LCD1602_FLAG_RS_DATA         0b00000001      // data (command if clear)
+/* Control flags (low nibble of each i2c byte) */
+#define LCD1602_FLAG_BACKLIGHT_ON    0b00001000   /* backlight enabled (disabled if clear) */
+#define LCD1602_FLAG_ENABLE          0b00000100   /* Data clock enable (falling edge clocks data) */
+#define LCD1602_FLAG_READ            0b00000010   /* read (write if clear) */
+#define LCD1602_FLAG_RS_DATA         0b00000001   /* data (command if clear) */
 
 // Use the second set (0bxxxx1xxx) to avoid placing the null character within a string
 #define I2C_LCD1602_CHARACTER_CUSTOM_0     0b00001000   ///< User-defined custom symbol in index 0

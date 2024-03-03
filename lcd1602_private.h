@@ -7,9 +7,9 @@
 
 typedef struct lcd1602_s
 {
-    uint16_t i2c_addr;
-    bool backlight_on;
-    uint64_t nextCommand; /* tick count when next command may begin */
+    uint8_t i2cAddress;
+    bool backlightOn;
+    uint64_t nextCommand; /* microsecond tick count when next command may begin */
     void *lowlevel;
 } lcd1602_t;
 

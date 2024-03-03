@@ -2,11 +2,7 @@
 #include "lcd1602_protocol.h"
 #include "lcd1602.h"
 
-typedef struct esp_lcd1602_s
-{
-    i2c_port_t port;
-    ssize_t timeout;
-} esp_lcd1602_t;
+
 
 /* ----------------------------------------------------------------------------------------------
  * Exported Functions
