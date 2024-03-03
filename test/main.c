@@ -7,7 +7,7 @@ int main(int argc, char *argv[])
    lcd1602_context ctx;
    lcd1602_lowlevel_config config = { "/dev/i2c-0" };
 
-   ctx = lcd1602_init(LCD1602_I2C_ADRESS_DEFAULT, 2, 16, &config);
+   ctx = lcd1602_init(LCD1602_I2C_ADRESS_ALTERNATE, &config);
    if(NULL == ctx)
    {
       LCDERR("Failed to initialize LCD1602\n");

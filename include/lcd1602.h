@@ -22,8 +22,7 @@ typedef struct
    #error "OS type not detected"
 #endif
 
-lcd1602_context lcd1602_init(uint16_t i2c_addr, uint16_t rows, uint16_t columns,
-   lcd1602_lowlevel_config *config);
+lcd1602_context lcd1602_init(uint16_t i2c_addr, lcd1602_lowlevel_config *config);
 void lcd1602_deinit(lcd1602_context context);
 
 /* ----------------------------------------------------------------
@@ -42,7 +41,7 @@ typedef enum
    LCD1602_SCROLL_RIGHT,
 } eLCD1602ScrollDirection;
 
-int lcd162_reset(lcd1602_context context);
+int lcd1602_reset(lcd1602_context context);
 int lcd1602_set_backlight(lcd1602_context context, bool enable);
 int lcd1602_set_display(lcd1602_context context, bool displayEnabled, bool cursorEnabled, bool blinkEnabled);
 int lcd1602_set_mode(lcd1602_context context, bool leftToRight, bool autoScroll);

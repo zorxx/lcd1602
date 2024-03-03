@@ -33,17 +33,18 @@ void lcd1602_ll_deinit(lcd1602_t *ctx)
  * Helper Functions
  */
 
-int lcd1602_ll_write_byte(const lcd1602_t *c, const uint8_t byte)
+int lcd1602_ll_write_byte(const lcd1602_t *c, const uint8_t data)
 {
    esp_lcd1602_t *l = (esp_lcd1602_t *) ctx->lowlevel;
    i2c_cmd_handle_t cmd = i2c_cmd_link_create();
+   uint16_t i;
    esp_err_t ret;
 
    ret = i2c_master_start(cmd);
    assert(ESP_OK == ret);
    ret = i2c_master_write_byte(cmd, c->dev_addr | I2C_MASTER_WRITE, true);
    assert(ESP_OK == ret);
-   ret = i2c_master_write_byte(cmd, byte, true);
+   ret = i2c_master_write_byte(cmd, data, true);
    assert(ESP_OK == ret);
    ret = i2c_master_stop(cmd);
    assert(ESP_OK == ret);

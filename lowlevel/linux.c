@@ -2,7 +2,9 @@
 #include <malloc.h>
 #include <string.h>
 #include <fcntl.h>
+#include <errno.h>
 #include <time.h>
+#include <inttypes.h>
 #include <pthread.h>
 #include <sys/ioctl.h>
 #include <linux/i2c.h>
@@ -34,7 +36,7 @@ int lcd1602_ll_init(lcd1602_t *ctx, lcd1602_lowlevel_config *config)
    l->device = strdup(config->device);
    if(NULL == l->device)
    {
-      LCDERR("[%s] Failed to open device '%s'\n", __func__, l->device);
+      LCDERR("[%s] Memory allocation error\n", __func__);
    }
    else
    {
@@ -63,6 +65,7 @@ int lcd1602_ll_init(lcd1602_t *ctx, lcd1602_lowlevel_config *config)
       free(l);
    }
 
+   LCDERR("[%s] result %d\n", __func__, result);
    return result;
 }
 
@@ -76,21 +79,34 @@ int lcd1602_ll_deinit(lcd1602_t *ctx)
    return 0;
 }
 
-int lcd1602_ll_write_byte(lcd1602_t *ctx, uint8_t byte)
+int lcd1602_ll_write_byte(lcd1602_t *ctx, uint8_t data)
 {
    linux_lcd1602_t *l = (linux_lcd1602_t *) ctx->lowlevel;
    struct i2c_smbus_ioctl_data args;
-   union i2c_smbus_data data;
+   union i2c_smbus_data smdata;
+   uint64_t time = lcd1602_ll_microsecond_tick(ctx);
+   int result;
 
+   smdata.byte = data;
    args.read_write = I2C_SMBUS_WRITE;
    args.command = 0; 
-   args.size = sizeof(byte); 
-   args.data = &data; 
-   return ioctl(l->handle, I2C_SMBUS, &args);
+   args.size = I2C_SMBUS_BYTE_DATA;  
+   args.data = &smdata; 
+   result = ioctl(l->handle, I2C_SMBUS, &args);
+   if(0 != result)
+   {
+      LCDERR("[%s] Failed (result %d, errno %d)\n", __func__, result, errno);
+      return result;
+   }
+
+   LCDDBG("[%s %016" PRIu64 "] 0x%02x\n", __func__, time, data);
+   return 0; 
 }
 
 int lcd1602_ll_delay(lcd1602_t *ctx, uint32_t microseconds)
 {
+   uint64_t time = lcd1602_ll_microsecond_tick(ctx);
+   LCDDBG("[%s %016" PRIu64 "] delay %" PRIu32 "\n", __func__, time, microseconds);
    usleep(microseconds);
    return 0;
 }

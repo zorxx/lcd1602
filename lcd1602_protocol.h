@@ -5,26 +5,24 @@
 
 #define LCD1602_MAX_CHAR_WRITE_COUNT 1024
 
-#define LCD1602_DELAY_POWER_ON 40000  // wait at least 40us after VCC rises to 2.7V
-#define LCD1602_DELAY_INIT_1   4100   // wait at least 4.1ms (fig 24, page 46)
-#define LCD1602_DELAY_INIT_2   4100   // wait at least 4.1ms (fig 24, page 46)
-#define LCD1602_DELAY_INIT_3   100    // wait at least 100us (fig 24, page 46)
+#define LCD1602_DELAY_POWER_ON 40000  /* wait at least 40ms after VCC rises to 2.7V */
+#define LCD1602_MAX_DELAY      10000  /* never need to wait longer than 10ms between i2c transactions */
 
-#define LCD1602_DELAY_ENABLE_PULSE_WIDTH   1  // enable pulse must be at least 450ns wide
-#define LCD1602_DELAY_ENABLE_PULSE_SETTLE  37 // command requires > 37us to settle (table 6 in datasheet)
+#define LCD1602_DELAY_ENABLE_PULSE_WIDTH   1  /* enable pulse must be at least 450ns wide */
+#define LCD1602_DELAY_ENABLE_PULSE_SETTLE  38 /* command requires > 37us to settle */
 
 #define LCD1602_MAX_ROWS      4
-#define LCD1602_MAX_COLUMNS   40
+#define LCD1602_MAX_COLUMNS   20
 
 /* ------------------------------------------------------------------------------
  * Commands
  */
 
 #define LCD1602_CMD_CLEAR           (1 << 0)
-   #define LCD1602_DELAY_CLEAR    2000 /* microseconds */
+   #define LCD1602_DELAY_CLEAR    1640 /* microseconds */
 
 #define LCD1602_CMD_HOME            (1 << 1)
-   #define LCD1602_DELAY_HOME     2000 /* microseconds */
+   #define LCD1602_DELAY_HOME     1640 /* microseconds */
 
 #define LCD1602_CMD_ENTRY_MODE_SET  (1 << 2)
    #define LCD1602_ENTRY_MODE_SET_FLAG_INCREMENT  0x02 /* left-to-right, if set; right-to-left if not */
@@ -78,6 +76,5 @@
 #define I2C_LCD1602_CHARACTER_DOT          0b10100101   ///< Centred dot symbol
 #define I2C_LCD1602_CHARACTER_DIVIDE       0b11111101   ///< Division sign symbol
 #define I2C_LCD1602_CHARACTER_BLOCK        0b11111111   ///< 5x8 filled block
-
 
 #endif /* LCD1602_PROTOCOL_H */

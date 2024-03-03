@@ -3,6 +3,12 @@
 
 #include <stdio.h>
 
+#if defined(LCD_ENABLE_DEBUG)
 #define LCDERR(...) fprintf(stderr, __VA_ARGS__)
+#define LCDDBG(...) fprintf(stderr, __VA_ARGS__)
+#else
+#define LCDERR(...)
+#define LCDDBG(...)
+#endif
 
 #endif /* _LCD1602_HELPERS_H */
