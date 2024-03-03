@@ -29,6 +29,8 @@ typedef struct
 typedef struct esp_lcd1602_s
 {
     i2c_port_t port;
+    int pin_sda;
+    int pin_scl;
 } lcd1602_lowlevel_config;
 
 #else

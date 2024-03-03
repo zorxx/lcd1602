@@ -7,6 +7,7 @@
 #include "nvs_flash.h"
 #include "esp_netif.h"
 #include "esp_event.h"
+#include "driver/gpio.h"
 #include "esp_log.h"
 #include "lcd1602.h"
 
@@ -18,6 +19,8 @@ void app_main(void)
 
    lcd1602_lowlevel_config config;
    config.port = I2C_NUM_0;
+   config.pin_sda = GPIO_NUM_21;
+   config.pin_scl = GPIO_NUM_22;
    lcd1602_context *ctx = lcd1602_init(LCD1602_I2C_ADRESS_ALTERNATE, true, &config);
    if(NULL != ctx)
    {

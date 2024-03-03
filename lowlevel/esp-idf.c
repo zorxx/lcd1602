@@ -12,8 +12,14 @@
 typedef struct
 {
    i2c_port_t port;
+   int pin_sda;
+   int pin_scl;
    uint32_t timeout;
 } esp_lcd1602_t;
+
+#define I2C_MASTER_FREQ_HZ 100000
+#define I2C_RX_BUFFER_SIZE 64
+#define I2C_TX_BUFFER_SIZE 64
 
 /* ----------------------------------------------------------------------------------------------
  * lcd1602 low-level implementation for esp-idf 
@@ -21,18 +27,37 @@ typedef struct
 
 int lcd1602_ll_init(lcd1602_t *ctx, lcd1602_lowlevel_config *config)
 {
-    esp_lcd1602_t *l = (esp_lcd1602_t *) calloc(1, sizeof(*l));
-    if(NULL == l)
+   bool success = false;
+
+   esp_lcd1602_t *l = (esp_lcd1602_t *) calloc(1, sizeof(*l));
+   if(NULL == l)
       return -1; 
-    l->port = config->port;
-    l->timeout = pdMS_TO_TICKS(LCD1602_I2C_TRANSFER_TIMEOUT);
-    ctx->lowlevel = l; 
-    return 0;
+
+   l->port = config->port;
+   l->timeout = pdMS_TO_TICKS(LCD1602_I2C_TRANSFER_TIMEOUT);
+   i2c_config_t conf = {
+      .mode = I2C_MODE_MASTER,
+      .sda_io_num = config->pin_sda,
+      .sda_pullup_en = GPIO_PULLUP_ENABLE,
+      .scl_io_num = config->pin_scl,
+      .scl_pullup_en = GPIO_PULLUP_ENABLE,
+      .master.clk_speed = I2C_MASTER_FREQ_HZ,
+      .clk_flags = 0,
+   };
+   if(i2c_param_config(config->port, &conf) == ESP_OK
+   && i2c_driver_install(config->port, I2C_MODE_MASTER, I2C_RX_BUFFER_SIZE, I2C_TX_BUFFER_SIZE, 0) == ESP_OK)
+   {
+      ctx->lowlevel = l; 
+      success = true;
+   }
+
+   return (success) ? 0  : -1;
 }
 
 int lcd1602_ll_deinit(lcd1602_t *ctx)
 {
    esp_lcd1602_t *l = (esp_lcd1602_t *) ctx->lowlevel;
+   i2c_driver_delete(l->port);
    free(l);
    return 0;
 }
@@ -44,7 +69,7 @@ int lcd1602_ll_write_byte(lcd1602_t *ctx, uint8_t data)
    esp_err_t result = ESP_FAIL;
 
    if(i2c_master_start(cmd) == ESP_OK
-   && i2c_master_write_byte(cmd, ctx->i2cAddress | I2C_MASTER_WRITE, true) == ESP_OK
+   && i2c_master_write_byte(cmd, (ctx->i2cAddress << 1) | I2C_MASTER_WRITE, true) == ESP_OK
    && i2c_master_write_byte(cmd, data, true) == ESP_OK
    && i2c_master_stop(cmd) == ESP_OK
    && i2c_master_cmd_begin(l->port, cmd, l->timeout) == ESP_OK)
