@@ -12,8 +12,6 @@
 typedef struct
 {
    i2c_port_t port;
-   int pin_sda;
-   int pin_scl;
    uint32_t timeout;
 } esp_lcd1602_t;
 

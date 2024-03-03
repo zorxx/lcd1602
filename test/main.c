@@ -18,9 +18,9 @@ int main(int argc, char *argv[])
       return -1;
    }
 
-   lcd1602_string(ctx, "Hello!");
-   lcd1602_set_cursor(ctx, 1, 5);
-   lcd1602_string(ctx, "There");
+   lcd1602_string(ctx, "Zorxx Software");
+   lcd1602_set_cursor(ctx, 1, 0);
+   lcd1602_string(ctx, "LCD1602 Library");
    lcd1602_set_display(ctx, true, true, true);
 
    lcd1602_deinit(ctx);

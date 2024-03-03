@@ -52,29 +52,4 @@
 #define LCD1602_FLAG_READ            0b00000010   /* read (write if clear) */
 #define LCD1602_FLAG_RS_DATA         0b00000001   /* data (command if clear) */
 
-// Use the second set (0bxxxx1xxx) to avoid placing the null character within a string
-#define I2C_LCD1602_CHARACTER_CUSTOM_0     0b00001000   ///< User-defined custom symbol in index 0
-#define I2C_LCD1602_CHARACTER_CUSTOM_1     0b00001001   ///< User-defined custom symbol in index 1
-#define I2C_LCD1602_CHARACTER_CUSTOM_2     0b00001010   ///< User-defined custom symbol in index 2
-#define I2C_LCD1602_CHARACTER_CUSTOM_3     0b00001011   ///< User-defined custom symbol in index 3
-#define I2C_LCD1602_CHARACTER_CUSTOM_4     0b00001100   ///< User-defined custom symbol in index 4
-#define I2C_LCD1602_CHARACTER_CUSTOM_5     0b00001101   ///< User-defined custom symbol in index 5
-#define I2C_LCD1602_CHARACTER_CUSTOM_6     0b00001110   ///< User-defined custom symbol in index 6
-#define I2C_LCD1602_CHARACTER_CUSTOM_7     0b00001111   ///< User-defined custom symbol in index 7
-
-#define I2C_LCD1602_CHARACTER_ALPHA        0b11100000   ///< Lower-case alpha symbol
-#define I2C_LCD1602_CHARACTER_BETA         0b11100010   ///< Lower-case beta symbol
-#define I2C_LCD1602_CHARACTER_THETA        0b11110010   ///< Lower-case theta symbol
-#define I2C_LCD1602_CHARACTER_PI           0b11110111   ///< Lower-case pi symbol
-#define I2C_LCD1602_CHARACTER_OMEGA        0b11110100   ///< Upper-case omega symbol
-#define I2C_LCD1602_CHARACTER_SIGMA        0b11110110   ///< Upper-case sigma symbol
-#define I2C_LCD1602_CHARACTER_INFINITY     0b11110011   ///< Infinity symbol
-#define I2C_LCD1602_CHARACTER_DEGREE       0b11011111   ///< Degree symbol
-#define I2C_LCD1602_CHARACTER_ARROW_RIGHT  0b01111110   ///< Arrow pointing right symbol
-#define I2C_LCD1602_CHARACTER_ARROW_LEFT   0b01111111   ///< Arrow pointing left symbol
-#define I2C_LCD1602_CHARACTER_SQUARE       0b11011011   ///< Square outline symbol
-#define I2C_LCD1602_CHARACTER_DOT          0b10100101   ///< Centred dot symbol
-#define I2C_LCD1602_CHARACTER_DIVIDE       0b11111101   ///< Division sign symbol
-#define I2C_LCD1602_CHARACTER_BLOCK        0b11111111   ///< 5x8 filled block
-
 #endif /* LCD1602_PROTOCOL_H */
