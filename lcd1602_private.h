@@ -1,3 +1,7 @@
+/* \copyright 2024 Zorxx Software. All rights reserved.
+ * \license This file is released under the MIT License. See the LICENSE file for details.
+ * \brief lcd1602 Library internal interface
+ */
 #ifndef _LCD1602_PRIVATE_H
 #define _LCD1602_PRIVATE_H
 

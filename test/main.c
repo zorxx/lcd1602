@@ -1,3 +1,7 @@
+/* \copyright 2024 Zorxx Software. All rights reserved.
+ * \license This file is released under the MIT License. See the LICENSE file for details.
+ * \brief lcd1602 library Linux example application
+ */
 #include <stdio.h>
 #include "helpers.h"
 #include "lcd1602.h"

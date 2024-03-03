@@ -1,3 +1,7 @@
+/* \copyright 2024 Zorxx Software. All rights reserved.
+ * \license This file is released under the MIT License. See the LICENSE file for details.
+ * \brief lcd1602 Library implementation
+ */
 #include <malloc.h>
 #include <string.h>
 #include <inttypes.h>
@@ -116,7 +120,7 @@ int lcd1602_string(lcd1602_context context, char *s)
 }
 
 int lcd1602_scroll(lcd1602_context context, eLCD1602ScrollTarget target,
-   eLCD1602ScrollTarget direction)
+   eLCD1602ScrollDirection direction)
 {
    return lcd1602_write_byte((lcd1602_t *) context,
       LCD1602_CMD_SHIFT
@@ -133,8 +137,6 @@ int lcd1602_set_backlight(lcd1602_context context, bool enable)
 
 int lcd1602_set_cursor(lcd1602_context context, uint16_t row, uint16_t column)
 {
-   lcd1602_t *c = (lcd1602_t *) context;
-
    if(row >= LCD1602_MAX_ROWS || column >= LCD1602_MAX_COLUMNS)
       return -1;
 
@@ -159,7 +161,7 @@ static int lcd1602_write_nibble(lcd1602_t *c, uint8_t value, bool isData)
    || lcd1602_ll_delay(c, 1) != 0  /* data setup time */
    || lcd1602_ll_write_byte(c, ((value << 4) & 0xf0) | flags | LCD1602_FLAG_ENABLE) != 0
    || lcd1602_ll_delay(c, 1) != 0  /* pulse width */
-   || lcd1602_ll_write_byte(c, ((value << 4) & 0xf0) | flags & ~LCD1602_FLAG_ENABLE) != 0)
+   || lcd1602_ll_write_byte(c, (((value << 4) & 0xf0) | flags) & ~LCD1602_FLAG_ENABLE) != 0)
    {
       LCDERR("[%s] Failed to transfer 0x%02x\n", __func__, value);
       return -1;

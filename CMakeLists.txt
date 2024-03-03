@@ -2,7 +2,9 @@
 
 # esp-idf component
 if(IDF_TARGET)
-   idf_component_register(SRCS "lcd1602.c" "lowlevel/esp-idf.c" INCLUDE_DIRS "." "include")
+   idf_component_register(SRCS "lcd1602.c" "lowlevel/esp-idf.c"
+                          INCLUDE_DIRS "." "include"
+                          PRIV_REQUIRES "driver" "esp_timer")
    return()
 endif()
 

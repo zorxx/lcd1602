@@ -1,3 +1,7 @@
+/* \copyright 2024 Zorxx Software. All rights reserved.
+ * \license This file is released under the MIT License. See the LICENSE file for details.
+ * \brief lcd1602 library API
+ */
 #ifndef LCD_1602_H
 #define LCD_1602_H
 
@@ -20,11 +24,11 @@ typedef struct
    const char *device;   /* e.g. "/dev/i2c-0" */
 } lcd1602_lowlevel_config;
 
-#elif defined(ESP_IDF_VERSION) && ESP_IDF_VERSION >= ESP_IDF_VERSION_VAL(4, 0, 0) 
+#elif defined(ESP_PLATFORM)
+#include "hal/i2c_types.h"
 typedef struct esp_lcd1602_s
 {
     i2c_port_t port;
-    ssize_t timeout;
 } lcd1602_lowlevel_config;
 
 #else
@@ -60,7 +64,7 @@ int lcd1602_clear(lcd1602_context context);
 int lcd1602_home(lcd1602_context context);
 int lcd1602_set_cursor(lcd1602_context context, uint16_t row, uint16_t column);
 int lcd1602_scroll(lcd1602_context context, eLCD1602ScrollTarget target,
-   eLCD1602ScrollTarget direction);
+   eLCD1602ScrollDirection direction);
 
 int lcd1602_char(lcd1602_context context, char c);
 int lcd1602_string(lcd1602_context context, char *s);

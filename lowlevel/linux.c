@@ -1,3 +1,7 @@
+/* \copyright 2024 Zorxx Software. All rights reserved.
+ * \license This file is released under the MIT License. See the LICENSE file for details.
+ * \brief lcd1602 Linux implementation
+ */
 #include <unistd.h>
 #include <malloc.h>
 #include <string.h>
