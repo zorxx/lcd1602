@@ -1,6 +1,6 @@
-/* \copyright 2024 Zorxx Software. All rights reserved.
- * \license This file is released under the MIT License. See the LICENSE file for details.
- * \brief lcd1602 library API
+/*! \copyright 2024 Zorxx Software. All rights reserved.
+ *  \license This file is released under the MIT License. See the LICENSE file for details.
+ *  \brief lcd1602 library API
  */
 #ifndef LCD_1602_H
 #define LCD_1602_H
@@ -8,36 +8,28 @@
 #include <stdint.h>
 #include <stdbool.h>  /* Requires C99 */
 
+#if defined(__linux__)
+   #include "lcd1602/sys_linux.h"
+#elif defined(ESP_PLATFORM)
+   #include "lcd1602/sys_esp.h"
+#else
+   #error "Supported OS type not detected"
+#endif
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 typedef void *lcd1602_context;
 
 /* ----------------------------------------------------------------
  * Initialization
  */
 
-#define LCD1602_I2C_ADRESS_DEFAULT   0x27
-#define LCD1602_I2C_ADRESS_ALTERNATE 0x3f
+#define LCD1602_I2C_ADDRESS_DEFAULT   0x27
+#define LCD1602_I2C_ADDRESS_ALTERNATE 0x3f
 
-#if defined(__linux__)
-typedef struct
-{
-   /* Note that it may be necessary to access i2c device files as root */
-   const char *device;   /* e.g. "/dev/i2c-0" */
-} lcd1602_lowlevel_config;
-
-#elif defined(ESP_PLATFORM)
-#include "hal/i2c_types.h"
-typedef struct esp_lcd1602_s
-{
-    i2c_port_t port;
-    int pin_sda;
-    int pin_scl;
-} lcd1602_lowlevel_config;
-
-#else
-   #error "Supported OS type not detected"
-#endif
-
-lcd1602_context lcd1602_init(uint8_t i2cAddress, bool backlightOn, lcd1602_lowlevel_config *config);
+lcd1602_context lcd1602_init(uint8_t i2cAddress, bool backlightOn, i2c_lowlevel_config *config);
 void lcd1602_deinit(lcd1602_context context);
 
 /* ----------------------------------------------------------------
@@ -70,5 +62,9 @@ int lcd1602_scroll(lcd1602_context context, eLCD1602ScrollTarget target,
 
 int lcd1602_char(lcd1602_context context, char c);
 int lcd1602_string(lcd1602_context context, char *s);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* LCD_1602_H */

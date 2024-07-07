@@ -1,10 +1,11 @@
-/* \copyright 2024 Zorxx Software. All rights reserved.
- * \license This file is released under the MIT License. See the LICENSE file for details.
- * \brief lcd1602 I2C protocol definitions
+/*! \copyright 2024 Zorxx Software. All rights reserved.
+ *  \license This file is released under the MIT License. See the LICENSE file for details.
+ *  \brief lcd1602 I2C protocol definitions
  */
 #ifndef LCD1602_PROTOCOL_H
 #define LCD1602_PROTOCOL_H
 
+#define LCD1602_I2C_SPEED                  400000 /* hz */
 #define LCD1602_I2C_TRANSFER_TIMEOUT       50 /* (milliseconds) give up on i2c transaction after this timeout */
 #define LCD1602_MAX_DELAY                  10000  /* (microseconds) never need to wait longer than 10ms between i2c transactions */
 #define LCD1602_DELAY_ENABLE_PULSE_WIDTH   1  /* (microseconds) enable pulse must be at least 450ns wide */

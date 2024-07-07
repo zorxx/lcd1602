@@ -1,4 +1,4 @@
-version: "1.0.0"
+version: "1.2.0"
 description: "LCD1602 driver (i2c, LCD2004, PCF8574A)"
 url: "https://github.com/zorxx/lcd1602"
 license: "MIT"

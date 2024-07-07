@@ -1,6 +1,6 @@
-/* \copyright 2024 Zorxx Software. All rights reserved.
- * \license This file is released under the MIT License. See the LICENSE file for details.
- * \brief lcd1602 Library implementation
+/*! \copyright 2024 Zorxx Software. All rights reserved.
+ *  \license This file is released under the MIT License. See the LICENSE file for details.
+ *  \brief lcd1602 Library implementation
  */
 #include <malloc.h>
 #include <string.h>
@@ -8,6 +8,7 @@
 #include "lcd1602_protocol.h"
 #include "lcd1602_private.h"
 #include "helpers.h"
+#include "sys.h"
 #include "lcd1602.h"
 
 /* Forward function declarations */
@@ -18,9 +19,10 @@ static int lcd1602_write_byte(lcd1602_t *c, uint8_t value, bool isData, uint32_t
  * Exported Functions 
  */
 
-lcd1602_context lcd1602_init(uint8_t i2cAddress, bool backlightOn, lcd1602_lowlevel_config *config)
+lcd1602_context lcd1602_init(uint8_t i2cAddress, bool backlightOn, i2c_lowlevel_config *config)
 {
    lcd1602_t *c;
+   bool success = false;
 
    c = (lcd1602_t *) malloc(sizeof(*c));
    if(NULL == c)
@@ -29,20 +31,48 @@ lcd1602_context lcd1602_init(uint8_t i2cAddress, bool backlightOn, lcd1602_lowle
    c->i2cAddress = i2cAddress;
    c->backlightOn = backlightOn;
 
-   if(lcd1602_ll_init(c, config) != 0
-   || lcd1602_reset(c) != 0)
+   c->i2c = i2c_ll_init(i2cAddress, LCD1602_I2C_SPEED, LCD1602_I2C_TRANSFER_TIMEOUT, config);
+   if(NULL == c->i2c)
    {
-      free(c);
-      return NULL;
+      SERR("[%s] i2c low-level initialization failed", __func__);
+   }
+   else
+   {
+      c->mutex = sys_mutex_init();
+      if(NULL == c->mutex)
+      {
+         SERR("[%s] mutex low-level initialization failed", __func__);
+      }
+      else
+      {
+         if(lcd1602_reset(c) != 0)
+         {
+            SERR("[%s] lcd1602 reset failed", __func__);
+         }
+         else
+            success = true;
+
+         if(!success)
+            sys_mutex_deinit(c->mutex);
+      }
+
+      if(!success)
+         i2c_ll_deinit(c->i2c);
    }
 
+   if(!success)
+   {
+      free(c);
+      c = NULL;
+   }
    return (lcd1602_context) c;
 }
 
 void lcd1602_deinit(lcd1602_context context)
 {
    lcd1602_t *c = (lcd1602_t *) context;
-   lcd1602_ll_deinit(c);
+   sys_mutex_deinit(c->mutex);
+   i2c_ll_deinit(c->i2c);
    free(c);    
 }
 
@@ -50,14 +80,14 @@ int lcd1602_reset(lcd1602_context context)
 {
    lcd1602_t *c = (lcd1602_t *) context;
 
-   lcd1602_ll_delay(c, 15000); /* wait time >= 15 ms after VCC > 4.5V */ 
+   sys_delay_us(15000); /* wait time >= 15 ms after VCC > 4.5V */ 
 
    if(lcd1602_write_nibble(c, 0x03, false) != 0  
-   || lcd1602_ll_delay(c, 4100) != 0                /* wait 4.1 ms */
+   || sys_delay_us(4100) != 0                /* wait 4.1 ms */
    || lcd1602_write_nibble(c, 0x03, false) != 0
-   || lcd1602_ll_delay(c, 100) != 0                 /* wait 100 us */
+   || sys_delay_us(100) != 0                 /* wait 100 us */
    || lcd1602_write_nibble(c, 0x02, false) != 0
-   || lcd1602_ll_delay(c, LCD1602_DELAY_ENABLE_PULSE_SETTLE) != 0
+   || sys_delay_us(LCD1602_DELAY_ENABLE_PULSE_SETTLE) != 0
    || lcd1602_write_byte(c, LCD1602_CMD_FUNCTION_SET | FLAG_FUNCTION_SET_LINES_2, false, 0) != 0
    || lcd1602_set_display(c, true, false, false) != 0
    || lcd1602_clear(c) != 0
@@ -111,7 +141,7 @@ int lcd1602_string(lcd1602_context context, char *s)
       result = lcd1602_write_byte((lcd1602_t *) context, s[count], true, 0);
       if(0 != result)
       {
-         LCDERR("[%s] Failed to write character index %u (result %d)\n",
+         SERR("[%s] Failed to write character index %" PRIu32 " (result %d)\n",
             __func__, count, result);
          return result;
       }
@@ -149,6 +179,11 @@ int lcd1602_set_cursor(lcd1602_context context, uint16_t row, uint16_t column)
  * Private Helper Functions
  */
 
+static int lcd1602_ll_write_byte(lcd1602_t *c, uint8_t data)
+{
+   return (i2c_ll_write(c->i2c, &data, sizeof(data))) ? 0 : -1;
+}
+
 /* The lower 4 bits of "value" are transferred by this function. The caller is responsible for ensuring
    a delay of LCD1602_DELAY_ENABLE_PULSE_SETTLE occurs before the next i2c transfer. */
 static int lcd1602_write_nibble(lcd1602_t *c, uint8_t value, bool isData)
@@ -158,12 +193,12 @@ static int lcd1602_write_nibble(lcd1602_t *c, uint8_t value, bool isData)
 
    /* I2C byte is clocked-in on the falling edge of LCD1602_FLAG_ENABLE */
    if(lcd1602_ll_write_byte(c, ((value << 4) & 0xf0) | flags) != 0
-   || lcd1602_ll_delay(c, 1) != 0  /* data setup time */
+   || sys_delay_us(1) != 0  /* data setup time */
    || lcd1602_ll_write_byte(c, ((value << 4) & 0xf0) | flags | LCD1602_FLAG_ENABLE) != 0
-   || lcd1602_ll_delay(c, 1) != 0  /* pulse width */
+   || sys_delay_us(1) != 0  /* pulse width */
    || lcd1602_ll_write_byte(c, (((value << 4) & 0xf0) | flags) & ~LCD1602_FLAG_ENABLE) != 0)
    {
-      LCDERR("[%s] Failed to transfer 0x%02x\n", __func__, value);
+      SERR("[%s] Failed to transfer 0x%02x\n", __func__, value);
       return -1;
    }
 
@@ -172,41 +207,41 @@ static int lcd1602_write_nibble(lcd1602_t *c, uint8_t value, bool isData)
 
 static int lcd1602_write_byte(lcd1602_t *c, uint8_t value, bool isData, uint32_t finalDelay)
 {
-   uint64_t currentTime = lcd1602_ll_microsecond_tick(c); 
+   uint64_t currentTime = sys_microsecond_tick();
    int result = -1;
 
-   LCDDBG("[%s] %s value 0x%02x\n", __func__, (isData) ? "Data" : "Control", value);
+   SDBG("[%s] %s value 0x%02x\n", __func__, (isData) ? "Data" : "Control", value);
 
-   lcd1602_ll_mutex_lock(c);
+   sys_mutex_lock(c->mutex);
 
    if(c->nextCommand > currentTime)
    {
       uint32_t delay = c->nextCommand - currentTime;
       if(delay > LCD1602_MAX_DELAY)
       {
-         LCDDBG("[%s] Calculated delay of %" PRIu32 "us, but capping at %" PRIu32 "us\n",
+         SDBG("[%s] Calculated delay of %" PRIu32 "us, but capping at %d us\n",
             __func__, delay, LCD1602_MAX_DELAY);
          delay = LCD1602_MAX_DELAY;
       }
-      lcd1602_ll_delay(c, delay);
+      sys_delay_us(delay);
    }
 
    if(lcd1602_write_nibble(c, (value >> 4) & 0x0f, isData) != 0  /* upper nibble*/
-   || lcd1602_ll_delay(c, LCD1602_DELAY_ENABLE_PULSE_SETTLE) != 0
+   || sys_delay_us(LCD1602_DELAY_ENABLE_PULSE_SETTLE) != 0
    || lcd1602_write_nibble(c, value & 0x0f, isData) != 0)        /* lower nibble */
    {
-      LCDERR("[%s] Failed to write data\n", __func__);
+      SERR("[%s] Failed to write data\n", __func__);
       c->nextCommand = 0;
    }
    else
    {
       /* Don't delay here, defer the delay until the next time an I2C transaction is needed */
-      c->nextCommand = lcd1602_ll_microsecond_tick(c)
+      c->nextCommand = sys_microsecond_tick()
                      + ((finalDelay < LCD1602_DELAY_ENABLE_PULSE_SETTLE) ? LCD1602_DELAY_ENABLE_PULSE_SETTLE : finalDelay);
       result = 0; 
    }
 
-   lcd1602_ll_mutex_unlock(c);
+   sys_mutex_unlock(c->mutex);
 
    return result; 
 }
