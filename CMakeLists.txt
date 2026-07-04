@@ -1,11 +1,18 @@
-# Copyright 2024 Zorxx Software. All rights reserved.
+# Copyright 2024-2026 Zorxx Software. All rights reserved.
 
 # esp-idf component
 if(IDF_TARGET)
+   # Starting from esp-idf v5.3, the peripheral drivers are in separate components
+    list(APPEND priv_requires "esp_timer")
+    if("${IDF_VERSION_MAJOR}.${IDF_VERSION_MINOR}" VERSION_GREATER_EQUAL "5.3")
+        list(APPEND priv_requires "esp_driver_i2c")
+    else()
+        list(APPEND priv_requires "driver")
+    endif()
    idf_component_register(SRCS "lib/lcd1602.c" "lib/esp-idf.c"
                           INCLUDE_DIRS "include"
                           PRIV_INCLUDE_DIRS "lib" "include/lcd1602"
-                          PRIV_REQUIRES "driver" "esp_timer")
+                          PRIV_REQUIRES ${priv_requires})
    return()
 endif()
 
